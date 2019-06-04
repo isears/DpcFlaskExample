@@ -14,7 +14,6 @@ function sync_state(new_state){
     console.log(new_state.active)
 
     status_indicator = document.getElementById("status_indicator");
-    $("#status_indicator")
 
     if(new_state.active) {
         $("#status_indicator").removeClass().addClass("active_request")
@@ -23,11 +22,26 @@ function sync_state(new_state){
         $("#status_indicator").removeClass().addClass("no_requests")
         $("#status_indicator").text("No DPC requests in progress")
     }
+
+    FRONTEND_STATE = new_state
+}
+
+function get_data() {
+
+    var request = new XMLHttpRequest()
+    request.open("GET", "/api/getdata", true)
+    request.send()
+
+    request.onload = function() {
+        console.log("receiving data from backend...")
+
+        $("#data_preview").empty()
+        $("#data_preview").append(this.response)
+    }
 }
 
 $(document).ready(function(){    
     var status_checker = function(){
-        //console.log('Checking status of in-flight requests (if any)')
         var request = new XMLHttpRequest()
         request.open("GET", "/api/check_status", true)
         request.send()
@@ -36,7 +50,12 @@ $(document).ready(function(){
             var backend_state = JSON.parse(this.response)
     
             if(backend_state.active != FRONTEND_STATE.active) {
-                FRONTEND_STATE = backend_state
+
+                if(FRONTEND_STATE.active) { // State change from "waiting for request" -> "request complete"
+                    console.log("Fetching new data...")
+                    get_data()
+                }
+
                 console.log("State sync required!")
                 sync_state(backend_state)
             }

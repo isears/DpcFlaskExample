@@ -1,0 +1,19 @@
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Family Name</th>
+        <th>Given Name</th>
+        <th>Gender</th>
+        <th>Birthdate</th>
+    </tr>
+
+    {% for beneficiary in beneficiaries %}
+    <tr>
+        <td>{{ beneficiary["id"] }}</td>
+        <td>{{ beneficiary["name"][0]["family"] }}</td>
+        <td>{{ beneficiary["name"][0]["given"] }}</td>
+        <td>{{ beneficiary["gender"] }}</td>
+        <td>{{ beneficiary["birthDate"] }}</td>
+    </tr>
+    {% endfor %}
+</table>
