@@ -64,4 +64,5 @@ $(document).ready(function(){
     
     setInterval(status_checker, 1000)
     sync_state(FRONTEND_STATE)
+    get_data()
 });

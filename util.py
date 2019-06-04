@@ -31,8 +31,8 @@ class DPCDataFetcher():
             return True
 
 
-    # TODO: This will keep on appending data on each call
     def _fetchData(self):
+        self.in_memory_datastore.clear()
         for entry in self._bulk_export_patients():
             self.in_memory_datastore.append(entry)
 
