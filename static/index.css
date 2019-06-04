@@ -1,0 +1,17 @@
+#status_indicator {
+    width: 100%;
+    text-align: center;
+    border-radius: 25px;
+}
+
+.no_requests {
+    background-color: lightgreen;
+    border: 2px solid darkgreen;
+
+}
+
+.active_request {
+    background-color: lightyellow;
+    border: 2px solid yellow;
+}
+

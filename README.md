@@ -12,6 +12,7 @@ For setup, it's recommended to create a dedicated python3 virtual environment li
 git clone https://github.com/isears/dpc-flask-example/
 cd dpc-flask-example/
 python3 -m venv venv
+. venv/bin/activate
 pip install -r requirements.txt
 ```
 
