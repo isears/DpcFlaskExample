@@ -57,3 +57,7 @@ After hitting the "Refresh" button, the demo will reach out to the configured DP
 Once the request has finished (it may take some time), a sample of the data fetched from the DPC server will be displayed in the Data Preview section
 
 ![](img/completed.png)
+
+If, for whatever reason, the DPC demo can't connect to the DPC server, error details will be dumped into the status banner
+
+![](img/error.png)
