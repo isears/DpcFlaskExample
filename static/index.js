@@ -1,5 +1,7 @@
 var FRONTEND_STATE = {
-    "active": false
+    "running": false,
+    "error_msg": "",
+    "provider_id": ""
 }
 
 function refresh_data(){
@@ -11,23 +13,30 @@ function refresh_data(){
 
 function sync_state(new_state){
     console.log("Syncing frontend and backend states")
-    console.log(new_state.active)
 
     status_indicator = document.getElementById("status_indicator");
+    console.log("Error msg: "  + new_state.error_msg)
 
-    if(new_state.active) {
-        $("#status_indicator").removeClass().addClass("active_request")
-        $("#status_indicator").text("DPC refresh request in progress")
-    }else {
-        $("#status_indicator").removeClass().addClass("no_requests")
-        $("#status_indicator").text("No DPC requests in progress")
+    if(new_state.error_msg) {
+        $("#status_indicator").removeClass().addClass("errored_request")
+        $("#status_indicator").empty()
+        $("#status_indicator").append("<p>Error communicating with DPC</p>")
+        $("#status_indicator").append("<p>" + new_state.error_msg + "</p>")
+    } else {
+        if(new_state.running) {
+            $("#status_indicator").removeClass().addClass("active_request")
+            $("#status_indicator").text("DPC refresh request in progress")
+        }else if(!new_state.running) {
+            $("#status_indicator").removeClass().addClass("no_requests")
+            $("#status_indicator").text("No DPC requests in progress")
+        }
     }
+    
 
     FRONTEND_STATE = new_state
 }
 
 function get_data() {
-
     var request = new XMLHttpRequest()
     request.open("GET", "/api/getdata", true)
     request.send()
@@ -49,14 +58,20 @@ $(document).ready(function(){
         request.onload = function() {
             var backend_state = JSON.parse(this.response)
     
-            if(backend_state.active != FRONTEND_STATE.active) {
+            if(backend_state.running != FRONTEND_STATE.running) {
 
                 if(FRONTEND_STATE.active) { // State change from "waiting for request" -> "request complete"
                     console.log("Fetching new data...")
                     get_data()
                 }
+            }
 
-                console.log("State sync required!")
+            if(
+                backend_state.running != FRONTEND_STATE.running ||
+                backend_state.provider_id != FRONTEND_STATE.provider_id ||
+                backend_state.error_msg != FRONTEND_STATE.error_msg
+            ){
+                console.log("States out of sync, frontend changes required")
                 sync_state(backend_state)
             }
         }

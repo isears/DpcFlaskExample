@@ -19,6 +19,11 @@ body {
     border: 2px solid orange;
 }
 
+.errored_request {
+    background-color: lightcoral;
+    border: 2px solid darkred;
+}
+
 table {
     border-collapse: collapse;
     width: 100%;

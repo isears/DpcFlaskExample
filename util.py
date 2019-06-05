@@ -12,57 +12,75 @@ class DPCDataFetcher():
         self.provider_id = provider_id
         self.internal_thread = threading.Thread(target=self._fetchData, args=())
         self.running = False
+        self.error_msg = ''
 
 
-    def start_request(self):
-        self.internal_thread.start()
-        self.running = True
-
- 
-    def isDone(self):
+    def update_state(self):
         if not self.running:
-            return False
+            pass
         elif self.internal_thread.isAlive():
-            return False
+            pass
         else:
             self.internal_thread.join()
             self.running = False
             self.internal_thread = threading.Thread(target=self._fetchData, args=()) # Get ready for next run
-            return True
 
+        return {
+                'running': self.running,
+                'error_msg': self.error_msg,
+                'provider_id': self.provider_id
+            }
+
+    def start_request(self):
+        self.running = True
+        self.error_msg = ''
+        self.internal_thread.start()
+        
 
     def _fetchData(self):
-        self.in_memory_datastore.clear()
-        for entry in self._bulk_export_patients():
-            self.in_memory_datastore.append(entry)
+        ret, err = self._bulk_export_patients()
+
+        if err == None:
+            self.in_memory_datastore.clear()
+            for entry in ret:
+                self.in_memory_datastore.append(entry)
+        else:
+            print('Exception while communicating with DPC')
+            self.error_msg = err
+
 
 
     def _bulk_export_patients(self):
-        sess = requests.session()
+        try:
+            sess = requests.session()
 
-        # Kickstart job
-        resp = sess.get('http://localhost:3002/v1/Group/{}/$export?_type=Patient'.format(self.provider_id))
+            # Kickstart job
+            resp = sess.get('http://localhost:3002/v1/Group/{}/$export?_type=Patient'.format(self.provider_id))
 
-        assert(resp.status_code == 204), print('This shouldn\'t happen...')  # TODO: more specific error handling
+            assert(resp.status_code == 204), 'Expected 204 on initial request, but got {}'.format(resp.status_code)  # TODO: more specific error handling
 
-        next_hop = resp.headers['Content-Location']
+            next_hop = resp.headers['Content-Location']
 
-        while True:
-            resp = sess.get(next_hop)
+            while True:
+                resp = sess.get(next_hop)
 
-            if resp.status_code == 202:  # Waiting for job to complete...
-                time.sleep(5)  # TODO: Make this a config option
-                pass
-            elif resp.status_code == 200:  # Job completed successfully
-                next_hop = json.loads(resp.text)['output'][0]['url']  # TODO: more specific data retrieval
+                assert (resp.status_code == 202 or resp.status_code == 200), 'Expected 202 or 200, but got {}'.format(resp.status_code)
 
-                ret_raw = sess.get(next_hop).text
+                if resp.status_code == 202:  # Waiting for job to complete...
+                    time.sleep(5)  # TODO: Make this a config option
+                    pass
+                elif resp.status_code == 200:  # Job completed successfully
+                    next_hop = json.loads(resp.text)['output'][0]['url']  # TODO: more specific data retrieval
 
-                return [json.loads(x) for x in ret_raw.split()]
+                    ret_raw = sess.get(next_hop).text
 
-            else:  # Some kind of error condition
-                print('This shouldn\'t happen...')  # TODO: more specific error handling
-                break
+                    return [json.loads(x) for x in ret_raw.split()], None
+
+                else:  # Some kind of error condition
+                    print('This shouldn\'t happen...')
+                    break
+        except Exception as ex:
+            return [], str(ex)
 
 
 if __name__ == '__main__':
