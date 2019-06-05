@@ -2,13 +2,20 @@ import requests
 import time
 import json
 import threading
+import traceback
 
 
 class DPCDataFetcher():
 
     in_memory_datastore = []
 
-    def __init__(self, provider_id):
+    def __init__(self, dpc_url, provider_id):
+
+        if not dpc_url.endswith('/'):
+            self.dpc_url = dpc_url + '/'
+        else:
+            self.dpc_url = dpc_url
+
         self.provider_id = provider_id
         self.internal_thread = threading.Thread(target=self._fetchData, args=())
         self.running = False
@@ -55,10 +62,9 @@ class DPCDataFetcher():
             sess = requests.session()
 
             # Kickstart job
-            resp = sess.get('http://localhost:3002/v1/Group/{}/$export?_type=Patient'.format(self.provider_id))
+            resp = sess.get('{}v1/Group/{}/$export?_type=Patient'.format(self.dpc_url, self.provider_id))
 
-            assert(resp.status_code == 204), 'Expected 204 on initial request, but got {}'.format(resp.status_code)  # TODO: more specific error handling
-
+            assert(resp.status_code == 204), 'Expected 204 on initial request, but got {}'.format(resp.status_code)
             next_hop = resp.headers['Content-Location']
 
             while True:
@@ -70,7 +76,7 @@ class DPCDataFetcher():
                     time.sleep(5)  # TODO: Make this a config option
                     pass
                 elif resp.status_code == 200:  # Job completed successfully
-                    next_hop = json.loads(resp.text)['output'][0]['url']  # TODO: more specific data retrieval
+                    next_hop = json.loads(resp.text)['output'][0]['url']
 
                     ret_raw = sess.get(next_hop).text
 
@@ -80,11 +86,12 @@ class DPCDataFetcher():
                     print('This shouldn\'t happen...')
                     break
         except Exception as ex:
+            traceback.print_exc()
             return [], str(ex)
 
 
 if __name__ == '__main__':
-    dataFetcher = DPCDataFetcher('8D80925A-027E-43DD-8AED-9A501CC4CD91')
+    dataFetcher = DPCDataFetcher('http://localhost:3002', '8D80925A-027E-43DD-8AED-9A501CC4CD91')
     patients = dataFetcher._bulk_export_patients()
 
     for patient in patients:

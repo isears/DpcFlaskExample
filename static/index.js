@@ -60,7 +60,7 @@ $(document).ready(function(){
     
             if(backend_state.running != FRONTEND_STATE.running) {
 
-                if(FRONTEND_STATE.active) { // State change from "waiting for request" -> "request complete"
+                if(FRONTEND_STATE.running) { // State change from "waiting for request" -> "request complete"
                     console.log("Fetching new data...")
                     get_data()
                 }

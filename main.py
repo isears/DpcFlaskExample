@@ -1,7 +1,6 @@
 from flask import Flask
 from flask import render_template
 from flask import request
-from flask import g
 from util import *
 
 import json
@@ -10,7 +9,9 @@ import sqlite3
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-DATA_FETCHER = DPCDataFetcher('8D80925A-027E-43DD-8AED-9A501CC4CD91')
+DPC_URL = 'http://localhost:3002'
+PROVIDER_ID = '8D80925A-027E-43DD-8AED-9A501CC4CD91'
+DATA_FETCHER = DPCDataFetcher(DPC_URL, PROVIDER_ID)
 DATA_DISPLAY_LIMIT = 10
 
 
